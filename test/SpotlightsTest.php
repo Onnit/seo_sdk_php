@@ -1,12 +1,14 @@
 <?php
 
-require_once 'bvseosdk.php';
+namespace BazaarvoiceSeo;
+
+require_once 'src/bvseosdk.php';
 require_once 'test/config.php';
 
 /**
  * Test class to test Spotlights.
  */
-class SpotlightsImplementingTest extends PHPUnit_Framework_testCase
+class SpotlightsImplementingTest extends \PHPUnit\Framework\TestCase
 {
   public $cloud_key = 'test';
   public $deployment_zone_id = 'test';

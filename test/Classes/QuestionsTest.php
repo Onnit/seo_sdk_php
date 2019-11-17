@@ -1,12 +1,14 @@
 <?php
 
-require_once 'bvseosdk.php';
+namespace BazaarvoiceSeo;
+
+require_once 'src/bvseosdk.php';
 require_once 'test/config.php';
 
 /**
  * Test Question class.
  */
-class QuestionsTest extends PHPUnit_Framework_testCase {
+class QuestionsTest extends \PHPUnit\Framework\TestCase {
 
   protected function getParams() {
     $params = array(

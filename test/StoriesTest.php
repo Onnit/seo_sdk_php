@@ -1,12 +1,12 @@
 <?php
 
-require_once 'bvseosdk.php';
+require_once 'src/bvseosdk.php';
 require_once 'test/config.php';
 
 /**
  * Test class to test Stories.
  */
-class StoriesImplementingTest extends PHPUnit_Framework_testCase
+class StoriesImplementingTest extends \PHPUnit\Framework\TestCase
 {
   var $params = array(
     'bv_root_folder' => 'test',
@@ -34,7 +34,7 @@ class StoriesImplementingTest extends PHPUnit_Framework_testCase
     // to force is_bot mode
     $_SERVER['HTTP_USER_AGENT'] = 'google';
 
-    $obj = $this->getMockBuilder('Stories')
+    $obj = $this->getMockBuilder('BazaarvoiceSeo\Stories')
         ->setConstructorArgs(array($this->params))
         ->setMethods(['curlError', 'curlErrorNo', 'curlExecute', 'curlInfo'])
         ->getMock();

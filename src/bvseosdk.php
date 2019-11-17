@@ -21,7 +21,7 @@
  *
  * require(bvsdk.php);
  *
- * $bv = new BV(array(
+ * $bv = new BazaarvoiceSeo\BV(array(
  *  'bv_root_folder' => '1234-en_US',
  *  'subject_id' => 'XXYYY',
  *  'cloud_key' => 'company-cdfa682b84bef44672efed074093ccd3',
@@ -29,6 +29,9 @@
  * ));
  *
  */
+
+namespace BazaarvoiceSeo;
+
 require_once 'BVUtility.php';
 require_once 'BVFooter.php';
 
@@ -166,28 +169,28 @@ class BV {
         case 'spotlights': $this->SEO = $this->spotlights;
           break;
         default:
-          throw new Exception('Invalid content_type value provided: ' . $this->config['content_type']);
+          throw new \Exception('Invalid content_type value provided: ' . $this->config['content_type']);
       }
     }
   }
 
   protected function validateParameters($params) {
     if (!is_array($params)) {
-      throw new Exception(
+      throw new \Exception(
         'BV class constructor argument $params must be an array.'
       );
     }
 
     // check to make sure we have the required parameters.
     if (empty($params['bv_root_folder'])) {
-      throw new Exception(
+      throw new \Exception(
         'BV class constructor argument $params is missing required bv_root_folder key. An ' .
         'array containing bv_root_folder (string) is expected.'
         );
     }
 
     if (empty($params['subject_id'])) {
-      throw new Exception(
+      throw new \Exception(
         'BV class constructor argument $params is missing required subject_id key. An ' .
         'array containing subject_id (string) is expected.'
       );
@@ -231,12 +234,12 @@ class Base {
         : $this->config['execution_timeout'];
 
     // set up combined user agent to be passed to cloud storage (if needed)
-    $this->config['user_agent'] = "bv_php_sdk/3.2.1;" . $_SERVER['HTTP_USER_AGENT'];
+    $this->config['user_agent'] = "bv_php_sdk/3.2.1;" . $this->_getUserAgentFromServer();
   }
 
   protected function validateParams($params) {
     if (!is_array($params)) {
-      throw new Exception('BV Base Class missing config array.');
+      throw new \Exception('BV Base Class missing config array.');
     }
   }
 
@@ -421,7 +424,7 @@ class Base {
 
       try {
         $payload = $this->_getFullSeoContents($access_method);
-      } catch (Exception $e) {
+      } catch (\Exception $e) {
         $this->_setBuildMessage($e->getMessage());
       }
     }
@@ -433,6 +436,18 @@ class Base {
   // -------------------------------------------------------------------
   //  Private methods. Internal workings of SDK.
   //--------------------------------------------------------------------
+
+  /**
+   * _getUserAgentFromServer
+   *
+   * Helper method to get the user agent from the $_SERVER variable.
+   *
+   * @access private
+   * @return bool
+   */
+  private function _getUserAgentFromServer() {
+    return empty($_SERVER['HTTP_USER_AGENT']) ? '' : $_SERVER['HTTP_USER_AGENT'];
+  }
 
   /**
    * isBot
@@ -450,7 +465,7 @@ class Base {
     }
 
     // search the user agent string for an indication if this is a search bot or not
-    return mb_eregi('(' . $this->config['crawler_agent_pattern'] . ')', $_SERVER['HTTP_USER_AGENT']);
+    return mb_eregi('(' . $this->config['crawler_agent_pattern'] . ')', $this->_getUserAgentFromServer());
   }
 
   /**
