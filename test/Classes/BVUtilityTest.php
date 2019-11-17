@@ -2,13 +2,12 @@
 
 namespace BazaarvoiceSeo;
 
-require_once 'src/BVUtility.php';
-require_once 'test/config.php';
+use PHPUnit\Framework\TestCase;
 
 /**
  * Test BVUtility class.
  */
-class BVUtilityTest extends \PHPUnit\Framework\TestCase {
+class BVUtilityTest extends TestCase {
 
   /**
    * Test parseUrlParameters.

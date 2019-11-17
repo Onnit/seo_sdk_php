@@ -2,13 +2,12 @@
 
 namespace BazaarvoiceSeo;
 
-require_once 'src/bvseosdk.php';
-require_once 'test/config.php';
+use PHPUnit\Framework\TestCase;
 
 /**
  * Test Spotlights class.
  */
-class SpotlightsTest extends \PHPUnit\Framework\TestCase {
+class SpotlightsTest extends TestCase {
 
   protected function getParams() {
     $params = array(

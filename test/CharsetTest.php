@@ -2,13 +2,13 @@
 
 namespace BazaarvoiceSeo;
 
-require_once 'src/bvseosdk.php';
-require_once 'test/config.php';
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 /**
  * Test class for testing charset stting
  */
-class CharsetTest extends \PHPUnit\Framework\TestCase
+class CharsetTest extends TestCase
 {
   var $params = array(
     'execution_timeout' => 5000,
@@ -19,7 +19,7 @@ class CharsetTest extends \PHPUnit\Framework\TestCase
 
   // Use reflection to test private methods
   protected static function getMethod($name) {
-    $class = new \ReflectionClass('BazaarvoiceSeo\Base');
+    $class = new ReflectionClass('BazaarvoiceSeo\Base');
     $method = $class->getMethod($name);
     $method->setAccessible(true);
     return $method;

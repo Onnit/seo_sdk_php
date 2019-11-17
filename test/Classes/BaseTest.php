@@ -2,13 +2,13 @@
 
 namespace BazaarvoiceSeo;
 
-require_once 'src/bvseosdk.php';
-require_once 'test/config.php';
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 /**
  * Test Base class.
  */
-class BaseTest extends \PHPUnit\Framework\TestCase {
+class BaseTest extends TestCase {
 
   protected function getParams() {
     $params = array(
@@ -37,7 +37,7 @@ class BaseTest extends \PHPUnit\Framework\TestCase {
   }
 
   protected static function getMethod($obj, $name) {
-    $class = new \ReflectionClass($obj);
+    $class = new ReflectionClass($obj);
     $method = $class->getMethod($name);
     $method->setAccessible(true);
     return $method;

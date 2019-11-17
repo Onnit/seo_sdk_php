@@ -1,12 +1,13 @@
 <?php
 
-require_once 'src/bvseosdk.php';
-require_once 'test/config.php';
+namespace BazaarvoiceSeo;
+
+use PHPUnit\Framework\TestCase;
 
 /**
  * Test class to test Stories.
  */
-class StoriesImplementingTest extends \PHPUnit\Framework\TestCase
+class StoriesImplementingTest extends TestCase
 {
   var $params = array(
     'bv_root_folder' => 'test',

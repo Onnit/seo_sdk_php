@@ -1,5 +1,5 @@
 {
-    "name": "leroy-merlin-br/seo_sdk_php",
+    "name": "onnit/seo_sdk_php",
     "type": "library",
     "description": "Bazaarvoice SEO SDK for PHP",
     "keywords": [
@@ -7,7 +7,7 @@
         "seo",
         "php"
     ],
-    "homepage": "https://github.com/leroy-merlin-br/seo_sdk_php",
+    "homepage": "https://github.com/onnit/seo_sdk_php",
     "license": "MIT",
     "require": {
         "php": ">=5.3"
@@ -18,10 +18,7 @@
     "autoload": {
         "psr-4": {
             "BazaarvoiceSeo\\": "src/"
-        },
-        "files": [
-            "src/bvseosdk.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {

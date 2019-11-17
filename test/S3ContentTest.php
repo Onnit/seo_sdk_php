@@ -2,13 +2,13 @@
 
 namespace BazaarvoiceSeo;
 
-require_once 'src/bvseosdk.php';
-require_once 'test/config.php';
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 /**
  * Test testing S3 content.
  */
-class S3ContentTest extends \PHPUnit\Framework\TestCase
+class S3ContentTest extends TestCase
 {
   public $cloud_key = 'test';
   public $deployment_zone_id = 'test';
@@ -16,7 +16,7 @@ class S3ContentTest extends \PHPUnit\Framework\TestCase
 
   // Use reflection to test private methods
   protected static function getMethod($name) {
-    $class = new \ReflectionClass('BazaarvoiceSeo\Base');
+    $class = new ReflectionClass('BazaarvoiceSeo\Base');
     $method = $class->getMethod($name);
     $method->setAccessible(true);
     return $method;
