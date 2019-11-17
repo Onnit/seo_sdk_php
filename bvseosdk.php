@@ -32,10 +32,6 @@
 require_once 'BVUtility.php';
 require_once 'BVFooter.php';
 
-// Should be declared in file where execTimer will be used.
-// If declared in the another file it does not affect the current file.
-declare(ticks = 1);
-
 // Default charset will be used in case charset parameter is not properly configured by user.
 define('DEFAULT_CHARSET', 'UTF-8');
 
@@ -77,22 +73,8 @@ class BV {
    * @return object
    */
   public function __construct($params = array()) {
-    if (!is_array($params)) {
-      throw new Exception(
-        'BV class constructor argument $params must be an array.'
-      );
-    }
 
-    // check to make sure we have the required parameters.
-    if (empty($params['bv_root_folder']) || empty($params['subject_id'])) {
-      throw new Exception(
-        'BV class constructor argument $params is missing required keys. An ' +
-        'array containing bv_root_folder (string) and subject_id (string) is ' +
-        'expected.'
-      );
-    }
-
-    $currentUrl = $this->_getCurrentUrl();
+    $this->validateParameters($params);
 
     // config array, defaults are defined here.
     $this->config = array(
@@ -101,7 +83,7 @@ class BV {
       'content_type' => isset($params['content_type']) ? $params['content_type'] : 'reviews',
       'subject_type' => isset($params['subject_type']) ? $params['subject_type'] : 'product',
       'page_url' => isset($params['page_url']) ? $params['page_url'] : '',
-      'base_url' => $currentUrl,
+      'base_url' => isset($params['base_url']) ? $params['base_url'] : '',
       'include_display_integration_code' => FALSE,
       'client_name' => $params['bv_root_folder'],
       'local_seo_file_root' => '',
@@ -134,12 +116,8 @@ class BV {
     //
     // We're after bvrrp, bvqap, bvsyp, and bvstate, but sweep up everything
     // while we're here.
-    $this->config['bv_page_data'] = BVUtility::parseUrlParameters($currentUrl);
     if (isset($params['page_url'])) {
-      $this->config['bv_page_data'] = array_merge(
-        BVUtility::parseUrlParameters($params['page_url']),
-        $this->config['bv_page_data']
-      );
+      $this->config['bv_page_data'] = BVUtility::parseUrlParameters($params['page_url']);
     }
 
     // Extract bvstate if present and parse that into a set of useful values.
@@ -166,13 +144,21 @@ class BV {
     $this->questions = new Questions($this->config);
     $this->stories = new Stories($this->config);
     $this->spotlights = new Spotlights($this->config);
+    $this->sellerratings = new SellerRatings($this->config);
 
     // Assign one to $this->SEO based on the content type.
     $ct = isset($this->config['page_params']['content_type']) ? $this->config['page_params']['content_type'] : $this->config['content_type'];
     if (isset($ct)) {
       switch ($ct) {
-        case 'reviews': $this->SEO = $this->reviews;
+        case 'reviews': {
+          $st = isset($this->config['page_params']['subject_type']) ? $this->config['page_params']['subject_type'] : $this->config['subject_type'];
+          if (isset($st) && $st == 'seller') {
+            $this->SEO = $this->sellerratings;
+          } else {
+            $this->SEO = $this->reviews;
+          }
           break;
+        }
         case 'questions': $this->SEO = $this->questions;
           break;
         case 'stories': $this->SEO = $this->stories;
@@ -185,38 +171,28 @@ class BV {
     }
   }
 
-  /**
-   * Function to construct and return current URL.
-   *
-   * Since this is used to set the default for an optional config option it is
-   * included in the BV class.
-   */
-  public function _getCurrentUrl() {
-    // depending on protocol set the beginning of url and default port.
-    // Note that various servers can and do set various different values in
-    // $_SERVER['HTTPS']. See:
-    // http://stackoverflow.com/questions/1175096/how-to-find-out-if-you-are-using-https-without-serverhttps
-    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-      $url = 'https://';
-      $defaultPort = '443';
-    } else {
-      $url = 'http://';
-      $defaultPort = '80';
+  protected function validateParameters($params) {
+    if (!is_array($params)) {
+      throw new Exception(
+        'BV class constructor argument $params must be an array.'
+      );
     }
 
-    $url .= $_SERVER['SERVER_NAME'];
-
-    // if there is a port other than the defaultPort
-    // being used it needs to be included
-    if ($_SERVER['SERVER_PORT'] != $defaultPort) {
-      $url .= ':' . $_SERVER['SERVER_PORT'];
+    // check to make sure we have the required parameters.
+    if (empty($params['bv_root_folder'])) {
+      throw new Exception(
+        'BV class constructor argument $params is missing required bv_root_folder key. An ' .
+        'array containing bv_root_folder (string) is expected.'
+        );
     }
 
-    $url .= $_SERVER['REQUEST_URI'];
-
-    return $url;
+    if (empty($params['subject_id'])) {
+      throw new Exception(
+        'BV class constructor argument $params is missing required subject_id key. An ' .
+        'array containing subject_id (string) is expected.'
+      );
+    }
   }
-
 }
 // end of BV class
 
@@ -232,9 +208,8 @@ class Base {
   private $msg = '';
 
   public function __construct($params = array()) {
-    if (!is_array($params)) {
-      throw new Exception('BV Base Class missing config array.');
-    }
+
+    $this->validateParams($params);
 
     $this->config = $params;
 
@@ -244,9 +219,25 @@ class Base {
     $this->bv_config['seo-domain']['testing_staging'] = 'seo-qa-stg.bazaarvoice.com';
     $this->bv_config['seo-domain']['testing_production'] = 'seo-qa.bazaarvoice.com';
 
+    // seller rating display is a special snowflake
+    $this->bv_config['srd-domain'] = 'srd.bazaarvoice.com';
+    $this->bv_config['srd-prefix-staging'] = 'stg';
+    $this->bv_config['srd-prefix-production'] = 'prod';
+    $this->bv_config['srd-prefix-testing_staging'] = 'qa-stg';
+    $this->bv_config['srd-prefix-testing_production'] = 'qa';
+
     $this->config['latency_timeout'] = $this->_isBot()
         ? $this->config['execution_timeout_bot']
         : $this->config['execution_timeout'];
+
+    // set up combined user agent to be passed to cloud storage (if needed)
+    $this->config['user_agent'] = "bv_php_sdk/3.2.1;" . $_SERVER['HTTP_USER_AGENT'];
+  }
+
+  protected function validateParams($params) {
+    if (!is_array($params)) {
+      throw new Exception('BV Base Class missing config array.');
+    }
   }
 
   /**
@@ -410,6 +401,7 @@ class Base {
    * from the base class can invoke it or replace it if needed.
    *
    * @access protected
+   * @param $access_method
    * @return string
    */
   protected function _renderSEO($access_method) {
@@ -428,12 +420,10 @@ class Base {
       }
 
       try {
-        BVUtility::execTimer($this->config['latency_timeout'], $isBot, $this->start_time);
         $payload = $this->_getFullSeoContents($access_method);
       } catch (Exception $e) {
         $this->_setBuildMessage($e->getMessage());
       }
-      BVUtility::stopTimer();
     }
 
     $payload .= $this->_buildComment($access_method);
@@ -560,21 +550,35 @@ class Base {
    * @return string
    */
   private function _buildSeoUrl($page_number) {
+    $primary_selector = 'seo-domain';
+
+      // calculate, which environment should we be using
     if ($this->config['testing']) {
       if ($this->config['staging']) {
-        $hostname = $this->bv_config['seo-domain']['testing_staging'];
+        $env_selector = 'testing_staging';
       } else {
-        $hostname = $this->bv_config['seo-domain']['testing_production'];
+        $env_selector = 'testing_production';
       }
     } else {
       if ($this->config['staging']) {
-        $hostname = $this->bv_config['seo-domain']['staging'];
+        $env_selector = 'staging';
       } else {
-        $hostname = $this->bv_config['seo-domain']['production'];
+        $env_selector = 'production';
       }
     }
 
     $url_scheme = $this->config['ssl_enabled'] ? 'https://' : 'http://';
+
+    if ($this->config['content_type'] == 'reviews' &&
+      $this->config['subject_type'] == 'seller') {
+      // when content type is reviews and subject type is seller,
+      // we're dealing with seller rating, so use different primary selector
+      $primary_selector = 'srd-domain';
+      // for seller rating we use different selector for prefix
+      $hostname = $this->bv_config[$primary_selector] . '/' . $this->bv_config['srd-prefix-' . $env_selector];
+    } else {
+      $hostname = $this->bv_config[$primary_selector][$env_selector];
+    };
 
     // dictates order of URL
     $url_parts = array(
@@ -686,9 +690,15 @@ class Base {
     // Should cURL return or print out the data? (true = return, false = print)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     // Timeout in seconds
-    curl_setopt($ch, CURLOPT_TIMEOUT, ($this->config['latency_timeout'] / 1000));
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, $this->config['latency_timeout']);
     // Enable decoding of the response
     curl_setopt($ch, CURLOPT_ENCODING, 'gzip,deflate');
+    // Enable following of redirects
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    // set user agent if needed
+    if ($this->config['user_agent'] != '') {
+        curl_setopt($ch, CURLOPT_USERAGENT, $this->config['user_agent']);
+    }
 
     if ($this->config['proxy_host'] != '') {
       curl_setopt($ch, CURLOPT_PROXY, $this->config['proxy_host']);
@@ -763,7 +773,19 @@ class Base {
       }
     }
 
-    $content = mb_ereg_replace('{INSERT_PAGE_URI}', $this->config['base_url'] . $page_url_query_prefix, $content);
+    $content = mb_ereg_replace(
+      '{INSERT_PAGE_URI}',
+      // Make sure someone doesn't sneak in "><script>...<script> in the URL
+      // contents.
+      htmlspecialchars(
+        $this->config['base_url'] . $page_url_query_prefix,
+        ENT_QUOTES | ENT_HTML5,
+        $this->config['charset'],
+        // Don't double-encode.
+        false
+      ),
+      $content
+    );
 
     return $content;
   }
@@ -942,7 +964,7 @@ class Stories extends Base {
   }
 
   public function getContent() {
-    $payload = $this->_renderSeo('getContent');
+    $payload = $this->_renderSEO('getContent');
     if (!empty($this->config['page_params']['subject_id']) && $this->_checkBVStateContentType()) {
       $subject_id = $this->config['page_params']['subject_id'];
     } else {
@@ -974,7 +996,7 @@ class Spotlights extends Base {
 
     // since we are in the spotlights class
     // we need to set the content_type config
-    // to reviews so we get reviews in our
+    // to spotlights so we get reviews in our
     // SEO request
     $this->config['content_type'] = 'spotlights';
 
@@ -983,17 +1005,35 @@ class Spotlights extends Base {
     $this->config['subject_type'] = 'category';
   }
 
-  public function getAggregateRating() {
-    return $this->_renderAggregateRating();
-  }
-
-  public function getReviews() {
-    return $this->_renderReviews();
-  }
-
   public function getContent() {
     return $this->_renderSEO('getContent');
   }
+
+}
+// end of Spotlights class
+
+class SellerRatings extends Base {
+
+    function __construct($params = array()) {
+
+        // call Base Class constructor
+        parent::__construct($params);
+
+        // since we are in the Seller Rating class
+        // we need to set the content_type config
+        // to reviews so we get reviews in our
+        // SEO request
+        $this->config['content_type'] = 'reviews';
+
+        // for seller rating subject type will always
+        // need to be seller
+        $this->config['subject_type'] = 'seller';
+
+    }
+
+    public function getContent() {
+        return $this->_renderSEO('getContent');
+    }
 
 }
 // end of Spotlights class

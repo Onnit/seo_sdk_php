@@ -4,11 +4,9 @@
  * BV PHP SEO SDK Footer
  */
 class BVFooter {
-  const VERSION = '2.3.0.1';
+  const VERSION = '3.2.1';
 
   private $base;
-  private $url;
-  private $method_type;
   private $access_method;
   private $msg;
 
@@ -17,14 +15,13 @@ class BVFooter {
    *
    * @access public
    * @param array ($base) - base class parameters
-   * @param string ($url) - SEO url
-   * @param string ($method_type) - access method type
+   * @param string ($access_method) - access method
    * @param string ($msg) - build message
    * @return object
    */
-  public function __construct($base, $method_type, $msg) {
+  public function __construct($base, $access_method, $msg) {
     $this->base = $base;
-    $this->method_type = $method_type;
+    $this->access_method = $access_method;
     $this->msg = $msg;
   }
 
@@ -37,8 +34,8 @@ class BVFooter {
    * @return string Html formatted footer.
    */
   public function buildSDKFooter() {
-    $access_method = !empty($this->base->config['internal_file_path']) ? 'LOCAL' : 'CLOUD';
-    $method_type = $this->method_type;
+    $method_type = !empty($this->base->config['internal_file_path']) ? 'LOCAL' : 'CLOUD';
+    $access_method = $this->access_method;
     $time_end = microtime(true);
 
     if (!empty($this->base->start_time)) {
@@ -51,7 +48,7 @@ class BVFooter {
 
     $footer = "\n" . '<ul id="BVSEOSDK_meta" style="display:none !important;">';
     $footer .= "\n" . '   <li data-bvseo="sdk">bvseo_sdk, p_sdk, ' . self::VERSION . '</li>';
-    $footer .= "\n" . '   <li data-bvseo="sp_mt">' . $access_method . ', method:' . $method_type . ', ' . $exec_time . 'ms</li>';
+    $footer .= "\n" . '   <li data-bvseo="sp_mt">' . $method_type . ', ' . $access_method . ', ' . $exec_time . 'ms</li>';
     $footer .= "\n" . '   <li data-bvseo="ct_st">' . $content_type . ', ' . $subject_type . '</li>';
     if (!empty($this->msg)) {
       $footer .= "\n" . '   <li data-bvseo="ms">bvseo-msg: ' . $this->msg . '</li>';
@@ -92,10 +89,12 @@ class BVFooter {
     $footer .= "\n" . '   <li data-bvseo="staging">' . $staging . '</li>';
     $footer .= "\n" . '   <li data-bvseo="testing">' . $testing . '</li>';
     $footer .= "\n" . '   <li data-bvseo="seo.sdk.enabled">' . $sdk_enabled . '</li>';
-    $footer .= "\n" . '   <li data-bvseo="stagingS3Hostname">' . $this->base->bv_config['seo-domain']['staging'] . '</li>';
-    $footer .= "\n" . '   <li data-bvseo="productionS3Hostname">' . $this->base->bv_config['seo-domain']['production'] . '</li>';
-    $footer .= "\n" . '   <li data-bvseo="testingStagingS3Hostname">' . $this->base->bv_config['seo-domain']['testing_staging'] . '</li>';
-    $footer .= "\n" . '   <li data-bvseo="testingProductionS3Hostname">' . $this->base->bv_config['seo-domain']['testing_production'] . '</li>';
+    if (!isset($this->base->config['subject_type']) || $this->base->config['subject_type'] != 'seller') {
+      $footer .= "\n" . '   <li data-bvseo="stagingS3Hostname">' . $this->base->bv_config['seo-domain']['staging'] . '</li>';
+      $footer .= "\n" . '   <li data-bvseo="productionS3Hostname">' . $this->base->bv_config['seo-domain']['production'] . '</li>';
+      $footer .= "\n" . '   <li data-bvseo="testingStagingS3Hostname">' . $this->base->bv_config['seo-domain']['testing_staging'] . '</li>';
+      $footer .= "\n" . '   <li data-bvseo="testingProductionS3Hostname">' . $this->base->bv_config['seo-domain']['testing_production'] . '</li>';
+    }
     $footer .= "\n" . '   <li data-bvseo="proxyHost">' . $proxy_host . '</li>';
     $footer .= "\n" . '   <li data-bvseo="proxyPort">' . $proxy_port . '</li>';
     $footer .= "\n" . '   <li data-bvseo="seo.sdk.execution.timeout.bot">' . $this->base->config['execution_timeout_bot'] . '</li>';
